@@ -3,8 +3,8 @@ const pointsLabel = document.querySelector('p#points');
 const menuDiv = document.querySelector('div#menu');
 
 let settings = {
-    rows: CONSTS.ROWS,
-    cols: CONSTS.COLS,
+    rows: window.screen.availWidth > 500 ? CONSTS.ROWS : 6,
+    cols: window.screen.availWidth > 500 ? CONSTS.COLS : 6,
     colors: CONSTS.CELL_COLORS.length,
 };
 let game = new Game(gameCanvas, settings);
