@@ -2,17 +2,94 @@ body, html, canvas {
     width: 100%;
     height: 100%;
     margin: 0;
+    background: #9748e7;
+    font-family: 'Poppins', sans-serif;
+    position: fixed;
+    top: 0;
+    z-index: -1;
 }
 
 #bar {
-    position: fixed;
-    top: 0;
-    width: 100vw;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 8px;
+    color: white;
 }
 
-#bar button {
-    margin-right: 8px;
+button {
+    background: none;
+    border: 0;
+}
+
+div#menu.hidden {
+    display: none;
+}
+
+div#overlay {
+    z-index: 0;
+    background-color: #0005;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+div#menu.hidden ~ div#overlay {
+    display: none;
+}
+
+p#points {
+    color: white;
+}
+
+div#menu {
+    position: fixed;
+    top: 0;
+    background: white;
+    height: 100%;
+    width: 30%;
+    min-width: 300px;
+    padding: 8px;
+    z-index: 1;
+    background: #d8ccf5;
+}
+
+div#menu div:first-child, nav#bar div:first-child {
+    display: flex;
+    align-items: center;
+}
+
+h1 {
+    margin: 0 8px;
+    display: block;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+div#menu ul > li > button {
+    padding: 16px;
+    background-color: #0001;
+}
+
+div#menu ul > li > button.full {
+    width: 100%;
+}
+
+li {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    text-align: center;
+}
+
+div#menu ul > li > p:not(.full) {
+    width: 35%;
 }
