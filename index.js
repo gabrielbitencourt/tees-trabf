@@ -1,6 +1,6 @@
 const CONSTS = {
-    ROWS: 7,
-    COLS: 7,
+    ROWS: 10,
+    COLS: 10,
     GRID_COLOR: 'rgba(0, 0, 0, .3)',
     CELL_SIZE: 50,
     COLORS_ENUM: [
@@ -8,17 +8,19 @@ const CONSTS = {
         'green',
         'blue',
         'yellow',
-        // 'purple',
-        // 'pink',
-        // 'cyan'
+        'purple',
+        'pink',
+        'cyan'
     ]
 };
 
-
+/**
+ * Representa célula do tabuleiro do jogo
+ */
 class Cell {
     /**
      * 
-     * @param {'red' | 'green' | 'blue' | 'yellow' | 'purple'} color 
+     * @param {'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'pink' | 'cyan'} color Cor da nova célula
      */
     constructor(color) {
         this.color = color || CONSTS.COLORS_ENUM[Math.floor(Math.random() * CONSTS.COLORS_ENUM.length)];
@@ -26,11 +28,14 @@ class Cell {
     }
 }
 
+/**
+ * Representa estado do jogo
+ */
 class Game {
     
     /**
      * 
-     * @param {HTMLCanvasElement} canvas html canvas element
+     * @param {HTMLCanvasElement} canvas Elemento html \<canvas\>
      */
     constructor(canvas) {
         this.canvas = canvas;
@@ -77,19 +82,27 @@ class Game {
         this.findAndRemoveAllSequences();
     }
 
+    /**
+     * Dá início ao jogo e seta os callbacks de resize e click
+     */
     start() {
         this.running = true;
         window.onresize = this.resizeHandler;
         this.canvas.onclick = this.clickHandler;
-        this.loop();
-        this.prevState = this;
+        this.draw();
     }
 
+    /**
+     * Limpa o canvas para desenhar novo frame
+     */
     clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.beginPath();
     }
 
+    /**
+     * Função que é executada quando o tamanho da janela muda
+     */
     resizeHandler() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -102,12 +115,12 @@ class Game {
             maxX: this.offsetX + (CONSTS.COLS * (CONSTS.CELL_SIZE + 1)),
             maxY: this.offsetY + (CONSTS.ROWS * (CONSTS.CELL_SIZE + 1))
         };
-        this.loop();
+        this.draw();
     }
 
     /**
-     * 
-     * @param {MouseEvent} ev 
+     * Função que trata os cliques do usuário no jogo
+     * @param {MouseEvent} ev Evento do clique
      */
     async clickHandler(ev) {
         if (ev.clientX > this.bounds.minX && ev.clientX < this.bounds.maxX && ev.clientY > this.bounds.minY && ev.clientY < this.bounds.maxY) {
@@ -115,31 +128,33 @@ class Game {
             const y = Math.floor((ev.clientY - this.bounds.minY) / CONSTS.CELL_SIZE);
 
             if (!this.selected) {
-                this.prevState = JSON.parse(JSON.stringify(this.grid));
                 this.grid[y][x].selected = true;
                 this.selected = { x, y };
             }
             else {
                 if (this.grid[y][x].selected === false) {
+                    // as duas células selecionadas devem estar na mesma linha ou na mesma coluna
                     if ((x === this.selected.x && Math.abs(y - this.selected.y) === 1) || (y === this.selected.y && Math.abs(x - this.selected.x) === 1)) {
-                        // check if theres sequences
                         const temp = this.grid[y][x];
                         this.grid[y][x] = this.grid[this.selected.y][this.selected.x];
                         this.grid[this.selected.y][this.selected.x] = temp;
                         
-                        this.loop();
-                        let sequences = this.checkCell({ row: y, col: x });
-                        sequences.push(...this.checkCell({ row: this.selected.y, col: this.selected.x }, sequences));
+                        this.draw();
+                        let sequences = this.findSequencesFromCell(y, x);
+                        sequences.push(...this.findSequencesFromCell(this.selected.y, this.selected.x, sequences));
                         await this.clenSequences(sequences);
 
                         let points = sequences.reduce((prev, sequence) => prev = prev + sequence.cells.length, 0);
+                        // não realiza movimento se ele não criar nova sequência
                         if (points === 0) {
                             this.grid[this.selected.y][this.selected.x] = this.grid[y][x];
                             this.grid[y][x] = temp;
                         }
                         else {
+                            // enquanto novas sequências forem identificadas
+                            // pontua, cria novas células, busca novas sequências
                             while (sequences.length) {
-                                this.loop();
+                                this.draw();
                                 const cellsModified = [];
 
                                 this.points = this.points + points;
@@ -153,12 +168,11 @@ class Game {
                                         }
                                     }
                                 }
-                                // check every cell of the rows modified starting from cell col to 0
-                                // after the check, get all new sequences and pull those rows and repeat
+
                                 sequences = [];
                                 for (const modifiedCell of cellsModified) {
-                                    this.loop();
-                                    const newSequences = this.checkCell(modifiedCell, sequences);
+                                    this.draw();
+                                    const newSequences = this.findSequencesFromCell(modifiedCell.row, modifiedCell.col, sequences);
                                     sequences.push(...newSequences);
                                     if (newSequences.length) await sleep(200);
                                 }
@@ -170,7 +184,7 @@ class Game {
                         this.grid[y][x].selected = false;
                         this.grid[this.selected.y][this.selected.x].selected = false;
                         this.selected = null;
-                        this.loop();
+                        this.draw();
                     }
                     else {
                         console.error('jogada não permitida');
@@ -182,21 +196,21 @@ class Game {
                 }
             }
         }
-        this.loop();
+        this.draw();
     }
 
-    loop() {
+    /**
+     * Limpa e redesenha o tabuleiro
+     */
+    draw() {
         this.clear();
         this.ctx.beginPath();
         this.drawGrid();
     }
 
-    pause() {
-        window.cancelAnimationFrame(this.frame);
-        this.frame = null;
-        if (this.scheduled) clearTimeout(this.scheduled);
-    }
-
+    /**
+     * Desenha no canvas as linhas e formas do jogo
+     */
     drawGrid() {
         this.ctx.beginPath();
         this.ctx.strokeStyle = CONSTS.GRID_COLOR;
@@ -230,12 +244,12 @@ class Game {
     }
 
     /**
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {'red' | 'green' | 'blue' | 'yelow' | 'purple'} fill 
-     * @param {number} r 
-     * @param {'black'} stroke 
+     * Desenha círculos no canvas
+     * @param {number} x Coordenada x da célular
+     * @param {number} y Coordenada y da célular
+     * @param {'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'pink' | 'cyan'} fill Cor da célula
+     * @param {'black'} stroke Cor da borda
+     * @param {number} r Raio da célula
      */
     drawCircle(x, y, fill, stroke, r = (CONSTS.CELL_SIZE - 4) / 2) {
         this.ctx.fillStyle = fill;
@@ -247,6 +261,11 @@ class Game {
         if (stroke) this.ctx.stroke();
     }
 
+    /**
+     * Busca e remove todas as sequências, sem pontuar e sem "animções".
+     * Usada na geração do primeiro tabuleiro.
+     * @todo otimizar e organizar função
+     */
     async findAndRemoveAllSequences() {
         for (let r = 0; r < CONSTS.ROWS; r++) {
             const row = this.grid[r];
@@ -289,25 +308,30 @@ class Game {
                 }
             }
         }
-        this.loop();
+        this.draw();
     }
 
     /**
+     * Procura sequências que a célula faz parte
+     * @param {number} row Linha da célula a ser checada
+     * @param {number} col Coluna da célula a ser checada
+     * @param {{cells: { col: number, row: number }[], direction: 'horizontal' | 'vertical'}[]} sequencesMade Sequências já verificadas na passagem atual
      * 
-     * @param {{ col: number, row: number }} cell 
-     * 
+     * @returns {{cells: { col: number, row: number }[], direction: 'horizontal' | 'vertical'}[]} Novas sequências
      */
-    checkCell(cell, sequencesMade = []) {
-        if (!this.grid[cell.row][cell.col]) return [];
-        const color = this.grid[cell.row][cell.col].color;
+    findSequencesFromCell(row, col, sequencesMade = []) {
+        if (!this.grid[row][col]) return [];
+        const color = this.grid[row][col].color;
         const sequences = [];
 
-        // sequencia vertical
-        let pointer = { row: cell.row, col: cell.col };
+        // sequências verticais
+        let pointer = { row, col };
         while (pointer.row > 0 && this.grid[pointer.row - 1][pointer.col] && this.grid[pointer.row][pointer.col].color === this.grid[pointer.row - 1][pointer.col].color) {
             pointer.row = pointer.row - 1;
         }
         
+        // se já tem outra sequência vertical que começou na mesma célula,
+        // não há necessidade de verificar novamente
         const sameVerticalSequence = sequencesMade
                 .filter(sequence => sequence.direction === 'vertical')
                 .find(sequence => sequence.cells[0].row === pointer.row && sequence.cells[0].col === pointer.col);
@@ -333,12 +357,14 @@ class Game {
         }
 
 
-        // sequencia horizontal
-        pointer = { row: cell.row, col: cell.col };
+        // sequências horizontais
+        pointer = { row, col };
         while (pointer.col > 0 && this.grid[pointer.row][pointer.col - 1] && this.grid[pointer.row][pointer.col].color === this.grid[pointer.row][pointer.col - 1].color) {
             pointer.col = pointer.col - 1;
         }
 
+        // se já tem outra sequência horizontal que começou na mesma célula,
+        // não há necessidade de verificar novamente
         const sameHorizontalSequence = sequencesMade
             .filter(sequence => sequence.direction === 'horizontal')
             .find(sequence => sequence.cells[0].row === pointer.row && sequence.cells[0].col === pointer.col);
@@ -348,7 +374,7 @@ class Game {
                 col: pointer.col
             }];
     
-            while (pointer.col + 1 < CONSTS.COLS && this.grid[cell.row][pointer.col + 1] && this.grid[cell.row][pointer.col + 1].color === color) {
+            while (pointer.col + 1 < CONSTS.COLS && this.grid[row][pointer.col + 1] && this.grid[row][pointer.col + 1].color === color) {
                 sequenceCells.push({
                     row: pointer.row,
                     col: pointer.col + 1
@@ -367,6 +393,11 @@ class Game {
         return sequences;
     }
 
+    /**
+     * Limpa sequências formadas
+     * @param {{cells: { col: number, row: number }[], direction: 'horizontal' | 'vertical'}[]} sequences Sequências que serão limpas do tabuleiro
+     * @param {boolean} timeout Se será "animado" ou não
+     */
     async clenSequences(sequences, timeout = true) {
         for (const sequence of sequences) {
             for (const cell of sequence.cells) {
@@ -374,11 +405,17 @@ class Game {
             }
         }
         if (timeout) {
-            this.loop();
+            this.draw();
             await sleep(150);
         }
     }
 
+    /**
+     * Cria novas células e puxa células de cima para espaços vazios em baixo
+     * @param {number} row Linha da célula a ser tratada
+     * @param {number} col Coluna da célula a ser tratada
+     * @param {boolean} timeout Se será "animado" ou não
+     */
     async pullRow(row, col, timeout = true) {
         if (this.grid[row][col]) return [];
         let newCells = 1;
@@ -393,7 +430,7 @@ class Game {
             this.grid[pointer][col] = this.grid[pointer - newCells][col];
             cellsModified.push({ col, row: pointer });
             pointer = pointer - newCells;
-            this.loop();
+            this.draw();
         }
 
         for (let index = pointer; index < newCells; index++) {
@@ -402,7 +439,7 @@ class Game {
         }
         
         if (timeout) {
-            this.loop();
+            this.draw();
             await sleep(150);
         }
         return cellsModified;
@@ -425,11 +462,6 @@ function restart() {
         pointsLabel.innerHTML = `${points} pontos`;
     };
     game.start();
-}
-
-function back() {
-    game.grid = game.prevState;
-    game.loop();
 }
 
 async function sleep(ms) {
