@@ -36,8 +36,8 @@ function stopTimer() {
 }
 
 function restart() {
-    stopTimer();
     savePoints();
+    stopTimer();
     pointsLabel.innerHTML = `0 pontos`;
     game = new Game(gameCanvas, settings);
     game.onPointsScored = onPointsScored;
@@ -47,8 +47,14 @@ function restart() {
 function savePoints() {
     if (game.points > 0) {
         const ranking = JSON.parse(localStorage.getItem('ranking') || '[]');
-        ranking.push(game.points);
-        ranking.sort().reverse();
+        ranking.push({
+            points: game.points,
+            time: Math.round(((Date.now() - start) / 1000 - paused) * 1000) / 1000
+        });
+        ranking.sort((a, b) => {
+            if (a.points == b.points) return a.time - b.time;
+            return b.points - a.points;
+        });
         localStorage.setItem('ranking', JSON.stringify(ranking));
         updateRanking();
     }
@@ -73,9 +79,9 @@ function updateRanking() {
         els[0].innerHTML = '<p class="full">Não há pontuações salvas.</p>';
         els[0].classList.add('ranking');
     }
-    for (const points of ranking.slice(0, 3)) {
+    for (const classif of ranking.slice(0, 3)) {
         const el = document.createElement('li');
-        el.innerHTML = `<p class="full">${els.length + 1}º - ${points} pontos</p>`;
+        el.innerHTML = `<p class="full">${els.length + 1}º - ${classif.points} pontos em ${classif.time}s</p>`;
         el.classList.add('ranking');
         els.push(el);
     }
@@ -95,7 +101,6 @@ function toggleMenu() {
     if (game.points > 0) {
         if (closing) {
             paused = paused + (Date.now() - pause) / 1000;
-            console.log(paused);
             timerInterval = setInterval(tickTimer, 100);
         }
         else {
