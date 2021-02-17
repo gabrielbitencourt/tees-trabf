@@ -1,35 +1,47 @@
-const gameCanvas = document.querySelector('canvas#game');
-const pointsLabel = document.querySelector('p#points');
-const menuDiv = document.querySelector('div#menu');
+const timerLabel = document.querySelector('p#timer');
+function tickTimer() {
+    timerLabel.innerHTML = `${Math.round(((Date.now() - start) / 1000 - paused) * 1000) / 1000}s`;
+}
 
+const pointsLabel = document.querySelector('p#points');
+function onPointsScored(points) {
+    if (!start) startTimer();
+    pointsLabel.innerHTML = `${points} pontos`;
+}
+
+const gameCanvas = document.querySelector('canvas#game');
 let settings = {
     rows: window.screen.availWidth > 500 ? CONSTS.ROWS : 6,
     cols: window.screen.availWidth > 500 ? CONSTS.COLS : 6,
     colors: window.screen.availWidth > 500 ? CONSTS.CELL_COLORS.length : 5,
 };
-let game = new Game(gameCanvas, settings);
-game.onPointsScored = (points) => {
-    pointsLabel.innerHTML = `${points} pontos`;
-};
 
-const timerLabel = document.querySelector('p#timer');
-function tickTimer() {
-    timerLabel.innerHTML = `${(Date.now() - start) / 1000}s`;
+let game = new Game(gameCanvas, settings);
+game.onPointsScored = onPointsScored;
+game.start();
+let timerInterval, start;
+
+function startTimer() {
+    start = Date.now();
+    if (!timerInterval) timerInterval = setInterval(tickTimer, 100);
 }
 
-game.start();
-let start = Date.now();
-let timerInterval = setInterval(tickTimer, 100);
+function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    start = null;
+    pause = null;
+    paused = 0;
+    timerLabel.innerHTML = '0.0s';
+}
 
 function restart() {
+    stopTimer();
     savePoints();
     pointsLabel.innerHTML = `0 pontos`;
     game = new Game(gameCanvas, settings);
-    game.onPointsScored = (points) => {
-        pointsLabel.innerHTML = `${points} pontos`;
-    };
+    game.onPointsScored = onPointsScored;
     game.start();
-    start = Date.now();
 }
 
 function savePoints() {
@@ -73,10 +85,24 @@ function updateRanking() {
 
 function clearRanking() {
     localStorage.removeItem('ranking');
+    updateRanking();
 }
 
+let paused = 0, pause;
+const menuDiv = document.querySelector('div#menu');
 function toggleMenu() {
-    menuDiv.classList.toggle('hidden');
+    const closing = menuDiv.classList.toggle('hidden');
+    if (game.points > 0) {
+        if (closing) {
+            paused = paused + (Date.now() - pause) / 1000;
+            console.log(paused);
+            timerInterval = setInterval(tickTimer, 100);
+        }
+        else {
+            pause = Date.now();
+            clearInterval(timerInterval);
+        }
+    }
 }
 
 const colorsLabel = document.querySelector('p#colors');

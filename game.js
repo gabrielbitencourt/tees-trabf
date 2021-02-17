@@ -6,6 +6,7 @@ const CONSTS = {
     COLORS: {
         grid: "#E3D54F",
         background: "#6433D7",
+        selected: '#E0E0E0',
         red: "#a31621",
         green: "#519872",
         blue: "#01357A",
@@ -88,7 +89,7 @@ class Game {
             }
         }
 
-        this.drawGrid();
+        this.drawGrid(false);
         this.findSequences();
     }
 
@@ -134,31 +135,31 @@ class Game {
      */
     async clickHandler(ev) {
         if (ev.clientX > this.bounds.minX && ev.clientX < this.bounds.maxX && ev.clientY > this.bounds.minY && ev.clientY < this.bounds.maxY) {
-            const x = Math.floor((ev.clientX - this.bounds.minX) / CONSTS.CELL_SIZE);
-            const y = Math.floor((ev.clientY - this.bounds.minY) / CONSTS.CELL_SIZE);
+            const col = Math.floor((ev.clientX - this.bounds.minX) / CONSTS.CELL_SIZE);
+            const row = Math.floor((ev.clientY - this.bounds.minY) / CONSTS.CELL_SIZE);
 
             if (!this.selected) {
-                this.grid[y][x].selected = true;
-                this.selected = { x, y };
+                this.selectCell(row, col);
             }
             else {
-                if (this.grid[y][x].selected === false) {
+                if (this.grid[row][col].selected === false) {
                     // as duas células selecionadas devem estar na mesma linha ou na mesma coluna
-                    if ((x === this.selected.x && Math.abs(y - this.selected.y) === 1) || (y === this.selected.y && Math.abs(x - this.selected.x) === 1)) {
-                        const temp = this.grid[y][x];
-                        this.grid[y][x] = this.grid[this.selected.y][this.selected.x];
-                        this.grid[this.selected.y][this.selected.x] = temp;
+                    if ((col === this.selected.col && Math.abs(row - this.selected.row) === 1) || (row === this.selected.row && Math.abs(col - this.selected.col) === 1)) {
+                        this.selectCell(row, col);
+                        const temp = this.grid[row][col];
+                        this.grid[row][col] = this.grid[this.selected.row][this.selected.col];
+                        this.grid[this.selected.row][this.selected.col] = temp;
                         
                         this.draw();
-                        let sequences = this.findSequencesFromCell(y, x);
-                        sequences.push(...this.findSequencesFromCell(this.selected.y, this.selected.x, sequences));
+                        let sequences = this.findSequencesFromCell(row, col);
+                        sequences.push(...this.findSequencesFromCell(this.selected.row, this.selected.col, sequences));
                         await this.cleanSequences(sequences);
 
                         let points = sequences.reduce((prev, sequence) => prev = prev + sequence.cells.length, 0);
                         // não realiza movimento se ele não criar nova sequência
                         if (points === 0) {
-                            this.grid[this.selected.y][this.selected.x] = this.grid[y][x];
-                            this.grid[y][x] = temp;
+                            this.grid[this.selected.row][this.selected.col] = this.grid[row][col];
+                            this.grid[row][col] = temp;
                         }
                         else {
                             // enquanto novas sequências forem identificadas
@@ -190,18 +191,16 @@ class Game {
                             }
                         }
 
-                        this.grid[y][x].selected = false;
-                        this.grid[this.selected.y][this.selected.x].selected = false;
-                        this.selected = null;
+                        this.deselectCell(this.selected.row, this.selected.col);
+                        this.deselectCell(row, col);
                         this.draw();
                     }
                     else {
-                        console.error('jogada não permitida');
+                        console.error('Jogada não permitida.');
                     }
                 }
                 else {
-                    this.grid[y][x].selected = false;
-                    this.selected = null;
+                    this.deselectCell(row, col);
                 }
             }
         }
@@ -214,13 +213,13 @@ class Game {
     draw() {
         this.clear();
         this.ctx.beginPath();
-        this.drawGrid();
+        this.drawGrid(false);
     }
 
     /**
      * Desenha no canvas as linhas e formas do jogo
      */
-    drawGrid() {
+    drawGrid(grid = true) {
         this.ctx.beginPath();
         this.ctx.strokeStyle = CONSTS.COLORS.grid;
         this.ctx.fillStyle = CONSTS.COLORS.background;
@@ -228,23 +227,25 @@ class Game {
         this.ctx.rect(this.offsetX + 1, this.offsetY + 1, (CONSTS.CELL_SIZE + 1) * this.settings.cols - 2, (CONSTS.CELL_SIZE + 1) * this.settings.rows - 2)
         this.ctx.fill();
 
-        this.ctx.beginPath();
+        if (grid) {
+            this.ctx.beginPath();
 
-        // horizontal lines
-        for (let i = 0; i <= this.settings.cols; i++) {
-            const fixedX = i * (CONSTS.CELL_SIZE + 1) + this.offsetX;
-            this.ctx.moveTo(fixedX, this.offsetY);
-            this.ctx.lineTo(fixedX, (CONSTS.CELL_SIZE + 1) * this.settings.rows + this.offsetY);
+            // horizontal lines
+            for (let i = 0; i <= this.settings.cols; i++) {
+                const fixedX = i * (CONSTS.CELL_SIZE + 1) + this.offsetX;
+                this.ctx.moveTo(fixedX, this.offsetY);
+                this.ctx.lineTo(fixedX, (CONSTS.CELL_SIZE + 1) * this.settings.rows + this.offsetY);
+            }
+        
+            // vertical lines
+            for (let j = 0; j <= this.settings.rows; j++) {
+                const fixedY = j * (CONSTS.CELL_SIZE + 1) + this.offsetY;
+                this.ctx.moveTo(this.offsetX, fixedY);
+                this.ctx.lineTo((CONSTS.CELL_SIZE + 1) * this.settings.cols + this.offsetX, fixedY);
+            }
+        
+            this.ctx.stroke();
         }
-    
-        // vertical lines
-        for (let j = 0; j <= this.settings.rows; j++) {
-            const fixedY = j * (CONSTS.CELL_SIZE + 1) + this.offsetY;
-            this.ctx.moveTo(this.offsetX, fixedY);
-            this.ctx.lineTo((CONSTS.CELL_SIZE + 1) * this.settings.cols + this.offsetX, fixedY);
-        }
-    
-        this.ctx.stroke();
 
         for (let r = 0; r < this.settings.rows; r++) {
             for (let c = 0; c < this.settings.cols; c++) {
@@ -252,7 +253,7 @@ class Game {
                 if (cell) {
                     const x = this.offsetX + (c * (CONSTS.CELL_SIZE + 1)) + ((CONSTS.CELL_SIZE + 1) / 2);
                     const y = this.offsetY + (r * (CONSTS.CELL_SIZE + 1)) + ((CONSTS.CELL_SIZE + 1) / 2);
-                    this.drawCircle(x, y, cell.color, cell.selected ? 'black' : undefined);
+                    this.drawCircle(x, y, cell.color, cell.selected);
                 }
             }
         }
@@ -263,17 +264,22 @@ class Game {
      * @param {number} x Coordenada x da célular
      * @param {number} y Coordenada y da célular
      * @param {'red' | 'green' | 'blue' | 'yellow' | 'purple' | 'pink' | 'cyan'} fill Cor da célula
-     * @param {'black'} stroke Cor da borda
+     * @param {boolean} selected Se célula está selecionada
      * @param {number} r Raio da célula
      */
-    drawCircle(x, y, fill, stroke, r = (CONSTS.CELL_SIZE - 6) / 2) {
+    drawCircle(x, y, fill, selected, r = (CONSTS.CELL_SIZE - 6) / 2) {
+        if (selected) {
+            this.ctx.fillStyle = CONSTS.COLORS.selected;
+            const cellX = x - (CONSTS.CELL_SIZE / 2);
+            const cellY = y - (CONSTS.CELL_SIZE / 2);
+            this.ctx.beginPath();
+            this.ctx.rect(cellX, cellY, CONSTS.CELL_SIZE, CONSTS.CELL_SIZE);
+            this.ctx.fill();
+        }
         this.ctx.fillStyle = fill;
-        this.ctx.strokeStyle = stroke;
-
         this.ctx.beginPath();
         this.ctx.arc(x, y, r, 0, 2 * Math.PI);
         this.ctx.fill();
-        if (stroke) this.ctx.stroke();
     }
 
     /**
@@ -284,13 +290,23 @@ class Game {
         for (const cell of cells) {
             if (this.grid[cell.row][cell.col]) {
                 this.ctx.fillStyle = this.grid[cell.row][cell.col].color;
-                const x = this.offsetX + cell.col * (CONSTS.CELL_SIZE + 1) + 1;
-                const y = this.offsetY + cell.row * (CONSTS.CELL_SIZE + 1) + 1;
+                const x = this.offsetX + cell.col * (CONSTS.CELL_SIZE + 1);
+                const y = this.offsetY + cell.row * (CONSTS.CELL_SIZE + 1);
                 this.ctx.beginPath();
-                this.ctx.rect(x, y, CONSTS.CELL_SIZE - 1, CONSTS.CELL_SIZE - 1);
+                this.ctx.rect(x, y, CONSTS.CELL_SIZE + 1, CONSTS.CELL_SIZE + 1);
                 this.ctx.fill();
             }
         }
+    }
+
+    deselectCell(row, col) {
+        this.grid[row][col].selected = false;
+        this.selected = null;
+    }
+
+    selectCell(row, col) {
+        this.grid[row][col].selected = true;
+        if (!this.selected) this.selected = { row, col };
     }
 
     /**
@@ -386,7 +402,7 @@ class Game {
                 pointer.row = pointer.row + 1;
             }
             if (sequenceCells.length >= 3) {
-                console.log(`${color} vertical sequence of ${sequenceCells.length} from (${pointer.row + 1}, ${pointer.col + 1})`);
+                // console.log(`${color} vertical sequence of ${sequenceCells.length} from (${pointer.row + 1}, ${pointer.col + 1})`);
                 sequences.push({
                     cells: sequenceCells,
                     direction: 'vertical'
@@ -421,7 +437,7 @@ class Game {
             }
     
             if (sequenceCells.length >= 3) {
-                console.log(`${color} horizontal sequence of ${sequenceCells.length} from (${pointer.row + 1}, ${pointer.col + 1})`);
+                // console.log(`${color} horizontal sequence of ${sequenceCells.length} from (${pointer.row + 1}, ${pointer.col + 1})`);
                 sequences.push({
                     cells: sequenceCells,
                     direction: 'horizontal'

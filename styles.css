@@ -114,3 +114,7 @@ li.ranking {
 li.ranking p {
     margin: 0;
 }
+
+p#timer {
+    color: white;
+}
