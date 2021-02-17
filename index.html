@@ -54,10 +54,18 @@
                 <li>
                     <button class="full" onclick="restart()">Recomeçar</button>
                 </li>
+                <li>
+                    <h4>Suas melhores pontuações</h4>
+                </li>
+                <li id="ranking"></li>
+                <li>
+                    <button class="full" onclick="clearRanking()">Limpar pontuações</button>
+                </li>
             </ul>
         </div>
         <div id="overlay" onclick="toggleMenu()"></div>
         <canvas id="game"></canvas>
+        <p id="timer">0.0s</p>
         <script src="game.js"></script>
         <script src="index.js"></script>
     </body>
