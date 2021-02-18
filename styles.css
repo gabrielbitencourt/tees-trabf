@@ -106,7 +106,7 @@ div#menu ul > li > p:not(.full) {
     width: 35%;
 }
 
-div#timer {
+div#timer-div {
     position: fixed;
     bottom: 0;
     text-align: center;
@@ -133,7 +133,7 @@ svg {
     fill: #131313;
 }
 
-div#timer svg {
+div#timer-div svg {
     width: 1.5rem;
     margin-right: 4px;
 }
