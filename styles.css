@@ -2,11 +2,15 @@ body, html, canvas {
     width: 100%;
     height: 100%;
     margin: 0;
-    background: #9748e7;
+    background: #E6D0BC;
     font-family: 'Poppins', sans-serif;
     position: fixed;
     top: 0;
     z-index: -1;
+}
+
+* {
+    color: #131313;
 }
 
 #bar {
@@ -14,7 +18,6 @@ body, html, canvas {
     align-items: center;
     justify-content: space-between;
     padding: 8px;
-    color: white;
 }
 
 button {
@@ -23,14 +26,16 @@ button {
 }
 
 div#menu.hidden {
-    display: none;
+    width: 0;
 }
+
+div#menu:not(.hidden) {padding: 8px;}
 
 div#overlay {
     z-index: 0;
     background-color: #0005;
     position: fixed;
-    top: 0;
+    top: 0px;
     left: 0;
     width: 100%;
     height: 100%;
@@ -40,25 +45,27 @@ div#menu.hidden ~ div#overlay {
     display: none;
 }
 
-p#points {
-    color: white;
-}
-
 div#menu {
     position: fixed;
     top: 0;
+    left: 0;
     background: white;
     height: 100%;
-    width: 30%;
-    min-width: 300px;
-    padding: 8px;
+    width: 300px;
     z-index: 1;
-    background: #d8ccf5;
+    /* background: #d8ccf5; */
+    overflow-x: hidden;
+    transition: 0.5s;
 }
 
 div#menu div:first-child, nav#bar div:first-child {
     display: flex;
     align-items: center;
+}
+
+div#menu div:first-child {
+    position: relative;
+    top: 2px;
 }
 
 h1 {
@@ -99,11 +106,14 @@ div#menu ul > li > p:not(.full) {
     width: 35%;
 }
 
-p#timer {
+div#timer {
     position: fixed;
     bottom: 0;
     text-align: center;
     width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 li.ranking {
@@ -115,6 +125,34 @@ li.ranking p {
     margin: 0;
 }
 
-p#timer {
-    color: white;
+div#menu ul > li > p.full {
+    white-space: normal;
+}
+
+svg {
+    fill: #131313;
+}
+
+div#timer svg {
+    width: 1.5rem;
+    margin-right: 4px;
+}
+
+div#menu div:last-child {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 8px;
+    width: calc(100% - 16px);
+}
+
+div#menu div:last-child p {
+    white-space: normal;
+    font-size: 12px;
+    text-align: center;
+    margin: 0;
+}
+
+div#menu div:last-child p:last-child {
+    margin-bottom: 9px;
 }

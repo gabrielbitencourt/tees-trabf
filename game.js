@@ -4,16 +4,17 @@ const CONSTS = {
     CELL_SIZE: 50,
     CELL_COLORS: ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'cyan'],
     COLORS: {
-        grid: "#E3D54F",
-        background: "#6433D7",
+        grid: '#E3D54F',
+        // background: '#6433D7',
+        background: '#FDF5F2',
         selected: '#E0E0E0',
-        red: "#a31621",
-        green: "#519872",
-        blue: "#01357A",
-        yellow: "#F8BD25",
-        purple: "#281551",
-        pink: "#fb6376",
-        cyan: "#5DBBD5"
+        red: '#a31621',
+        green: '#519872',
+        blue: '#01357A',
+        yellow: '#F8BD25',
+        purple: '#281551',
+        pink: '#fb6376',
+        cyan: '#5DBBD5'
     }
 
 };
@@ -310,7 +311,7 @@ class Game {
     }
 
     /**
-     * Busca todas as sequências célula por célula, sem pontuar e sem "animções".
+     * Busca todas as sequências célula por célula, sem pontuar e sem 'animções'.
      * Usada na geração do primeiro tabuleiro.
      * @param {boolean} remove Remover sequências encontradas ou não
      * @returns {Promise<boolean?>}
@@ -450,7 +451,7 @@ class Game {
     /**
      * Limpa sequências formadas
      * @param {{cells: { col: number, row: number }[], direction: 'horizontal' | 'vertical'}[]} sequences Sequências que serão limpas do tabuleiro
-     * @param {boolean} timeout Se será "animado" ou não
+     * @param {boolean} timeout Se será 'animado' ou não
      */
     async cleanSequences(sequences, timeout = true) {
         for (const sequence of sequences) {
@@ -473,7 +474,7 @@ class Game {
      * Cria novas células e puxa células de cima para espaços vazios em baixo
      * @param {number} row Linha da célula a ser tratada
      * @param {number} col Coluna da célula a ser tratada
-     * @param {boolean} timeout Se será "animado" ou não
+     * @param {boolean} timeout Se será 'animado' ou não
      */
     async pullRow(row, col, timeout = true) {
         if (this.grid[row][col]) return [];
