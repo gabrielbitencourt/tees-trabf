@@ -5,8 +5,7 @@ const CONSTS = {
     CELL_COLORS: ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'cyan'],
     COLORS: {
         grid: '#E3D54F',
-        // background: '#6433D7',
-        background: '#FDF5F2',
+        background: '#6433D7',
         selected: '#E0E0E0',
         red: '#a31621',
         green: '#519872',

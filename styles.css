@@ -2,15 +2,12 @@ body, html, canvas {
     width: 100%;
     height: 100%;
     margin: 0;
-    background: #E6D0BC;
+    background: #9748e7;
+    color: #ebebeb;
     font-family: 'Poppins', sans-serif;
     position: fixed;
     top: 0;
     z-index: -1;
-}
-
-* {
-    color: #131313;
 }
 
 #bar {
@@ -49,13 +46,13 @@ div#menu {
     position: fixed;
     top: 0;
     left: 0;
-    background: white;
     height: 100%;
     width: 300px;
     z-index: 1;
-    /* background: #d8ccf5; */
+    background: #d8ccf5;
     overflow-x: hidden;
     transition: 0.5s;
+    color: #131313;
 }
 
 div#menu div:first-child, nav#bar div:first-child {
@@ -102,6 +99,10 @@ li h4 {
     margin: 0;
 }
 
+button#close-menu-btn > svg {
+    fill: #131313;
+} 
+
 div#menu ul > li > p:not(.full) {
     width: 35%;
 }
@@ -130,7 +131,7 @@ div#menu ul > li > p.full {
 }
 
 svg {
-    fill: #131313;
+    fill: #ebebeb;
 }
 
 div#timer-div svg {
